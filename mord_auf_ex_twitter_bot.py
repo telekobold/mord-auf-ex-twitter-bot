@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
 import typing
+import logging
+import enum
 import tweepy
 import urllib.request as urlreq
 import hashlib
@@ -24,11 +26,18 @@ def create_api_client_v2() -> tweepy.client.Client:
                          access_token_secret = credentials.access_token_secret)
 
 
-def current_date_str() -> str:
+class DateType(enum.Enum):
+    FILENAME = "FILENAME"
+    STRING = "STRING"
+
+
+def current_date_str(datetype: DateType) -> str:
     """
-    :returns: the current date in the form "yyyy-mm-dd;hh:mm:ss"
+    :datetype: used to indicate for which application the returned string
+               should be used.
+    :returns:  the current date in the form "yyyy-mm-dd;hh:mm:ss"
     """
-    return datetime.now().strftime("%Y-%m-%d;%H:%M:%S")
+    return datetime.now().strftime("%Y-%m-%d_%H_%M_%S" if datetype == DateType.FILENAME else "%Y-%m-%d, %H:%M:%S")
 
 
 def csrf_token_filter(website_content: bytes) -> str:
@@ -119,13 +128,13 @@ def tweet_new_podcast() -> None:
     Checks if a new podcast has been published on `URL`. If so, 
     posts a new tweet.
     """
-    error_string: str = f"{current_date_str()}: The schema of {URL} seems to have changed!"
+    error_string: str = f"{current_date_str(DateType.STRING)}: The schema of {URL} seems to have changed!"
     
     last_content, last_hash = get_filtered_website_content_and_hash()
     last_number, last_link = get_newest_podcast_number_and_direct_link(last_content)
     #print(f"last_link = {last_link}")
     if not last_link:
-        print(error_string)
+        logging.warning(f"{current_date_str(DateType.STRING)}: {error_string}")
         return
     while(True):
         #print("Entered loop")
@@ -136,26 +145,29 @@ def tweet_new_podcast() -> None:
         #print(f"current_hash = {current_hash}")
         #print(f"last_hash = {last_hash}")
         if current_hash == last_hash:
-            print(f"{current_date_str()}: No update")
+            logging.info(f"{current_date_str(DateType.STRING)}: No update")
             continue
         current_number, current_link = get_newest_podcast_number_and_direct_link(current_content)
         #print(f"current_link = {current_link}")
         if not current_link:
-            print(error_string)
+            logging.error(f"{current_date_str(DateType.STRING)}: {error_string}")
             return
         if last_link != current_link:
-            print(f"{current_date_str()}: Obviously, something other than a new post was changed on {URL}!")
+            logging.warning(f"{current_date_str(DateType.STRING)}: Obviously, something other than a new post was changed on {URL}!")
             continue
         else:
-            print(f"{current_date_str()}: Now posting new tweet.")
+            logging.info(f"{current_date_str(DateType.STRING)}: Now posting a new tweet.")
             publish_message = f"Mord auf Ex-Podcast Nummer {current_number} wurde veröffentlicht: {current_link}"
             #api_client.create_tweet(text=publish_message)
             print(publish_message)
+            logging.info(f"{current_date_str(DateType.STRING)}: Posted a new tweet: {publish_message}")
             last_hash = current_hash
             last_link = current_link
 
 
 if __name__ == "__main__":
-    print("Started the @mordaufex Twitter bot.")
+    # The parameter `encoding="utf-8"` is only supported in Python versions >= 3.9:
+    logging.basicConfig(filename=f"mordaufex_log_{current_date_str(DateType.FILENAME)}.log", level=logging.INFO)
+    logging.info(f"{current_date_str(DateType.STRING)}: Started the @mordaufex Twitter bot.")
     api_client = create_api_client_v2()
     tweet_new_podcast()
