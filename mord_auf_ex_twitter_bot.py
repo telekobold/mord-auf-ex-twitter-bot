@@ -100,10 +100,10 @@ def get_newest_podcast_direct_link(site_source: str) -> str:
     if substring_match:
         newest_podcast_h1: str = site_source[substring_match.start():substring_match.end()]
         # Extract the direct link to the new podcast:
-        direct_link_regex: re.Pattern = re.compile(r"<a href=\"/[0-9]{1,3}-[a-zA-Z0-9äöüÄÖÜß\-]*\">#[0-9]{1,3}[a-zA-Z0-9äöüÄÖÜß ?!:;,.]*</a>")
+        direct_link_regex: re.Pattern = re.compile(r"<a href=\"/[0-9]{1,3}-[a-zA-Z0-9äöüÄÖÜß\-]*\">")
         direct_link_match: re.Match = direct_link_regex.search(newest_podcast_h1)
         relative_link: str = newest_podcast_h1[direct_link_match.start(): direct_link_match.end()]
-        absolute_link: str = relative_link[0:9] + URL + relative_link[10:len(relative_link)]
+        absolute_link: str = URL + relative_link[10:len(relative_link)-2]
         return absolute_link
     else:
         return None
@@ -149,7 +149,6 @@ def tweet_new_podcast() -> None:
             continue
         else:
             print(f"{current_date_str()}: Now posting new tweet!")
-            # BUG: The link must be nicely formatted!
             #api_client.create_tweet(text=f"Ein neuer Mord auf Ex-Podcast wurde veröffentlicht: {current_link}")
             print(f"Ein neuer Mord auf Ex-Podcast wurde veröffentlicht: {current_link}")
             last_hash = current_hash
