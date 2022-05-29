@@ -13,20 +13,6 @@ import credentials # ignored via .gitignore
 URL: str = "https://mordaufex.podigee.io/"
 
 
-"""
-def create_api_client_v1_1():
-"""
-#    :returns: A new tweepy Twitter API v1 Client using the imported credentials.
-"""
-    auth = tweepy.OAuthHandler(credentials.consumer_key, credentials.consumer_secret)
-    auth.set_access_token(credentials.access_token, credentials.access_token_secret)
-    api = tweepy.API(auth, wait_on_rate_limit=True)
-    api.verify_credentials()
-    
-    return api
-"""
-
-
 def create_api_client_v2() -> tweepy.client.Client:
     """
     :returns: A new tweepy Twitter API v2 Client using the imported credentials.
@@ -125,7 +111,6 @@ def tweet_new_podcast() -> None:
             continue
         else:
             print(f"{current_date_str()}: Now posting new tweet!")
-            #api_client.update_status(f"Ein neuer Mord auf Ex-Podcast wurde veröffentlicht: {current_link}") # Twitter API, Version 1
             # BUG: The link must be nicely formatted!
             #api_client.create_tweet(text=f"Ein neuer Mord auf Ex-Podcast wurde veröffentlicht: {current_link}")
             last_hash = current_hash
