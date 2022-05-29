@@ -85,12 +85,12 @@ def get_filtered_website_content_and_hash() -> typing.Tuple[str, str]:
     return website_content_str_filtered, website_content_hash
 
 
-def get_newest_podcast_direct_link(site_source: str) -> str:
+def get_newest_podcast_number_and_direct_link(site_source: str) -> typing.Tuple[str, str]:
     """
     :site_source: A string containing well-formed HTML code.
-    :returns:     The direct link to the newest podcast 
-                  or `None` if no h1 element matching the topmost podcast 
-                  post h1 pattern could be found.
+    :returns:     A tuple containing the number of and the direct link to
+                  the newest podcast or `None` if no h1 element matching 
+                  the topmost podcast post h1 pattern could be found.
     """
     # TODO: Rewrite this so that `direct_link_regex` can be used in the 
     # definition of `newest_post_h1_regex` somehow (to avoid code duplication).
@@ -99,12 +99,17 @@ def get_newest_podcast_direct_link(site_source: str) -> str:
     substring_match: re.Match = newest_post_h1_regex.search(site_source)
     if substring_match:
         newest_podcast_h1: str = site_source[substring_match.start():substring_match.end()]
+        # Extract the number of the new podcast:
+        number_find_regex: re.Pattern = re.compile(r">#[0-9]{1,3}")
+        number_find_match: re.Match = number_find_regex.search(newest_podcast_h1)
+        number: str = newest_podcast_h1[number_find_match.start()+2:number_find_match.end()]
+        print(f"number = {number}")
         # Extract the direct link to the new podcast:
         direct_link_regex: re.Pattern = re.compile(r"<a href=\"/[0-9]{1,3}-[a-zA-Z0-9äöüÄÖÜß\-]*\">")
         direct_link_match: re.Match = direct_link_regex.search(newest_podcast_h1)
         relative_link: str = newest_podcast_h1[direct_link_match.start(): direct_link_match.end()]
         absolute_link: str = URL + relative_link[10:len(relative_link)-2]
-        return absolute_link
+        return number, absolute_link
     else:
         return None
 
@@ -117,7 +122,7 @@ def tweet_new_podcast() -> None:
     error_string: str = f"{current_date_str()}: The schema of {URL} seems to have changed!"
     
     last_content, last_hash = get_filtered_website_content_and_hash()
-    last_link: str = get_newest_podcast_direct_link(last_content)
+    last_number, last_link = get_newest_podcast_number_and_direct_link(last_content)
     print(f"type(last_link) = {type(last_link)}")
     print(f"last_link = {last_link}")
     if not last_link:
@@ -138,7 +143,7 @@ def tweet_new_podcast() -> None:
             print(f"{current_date_str()}: No update!")
             continue
         """
-        current_link: str = get_newest_podcast_direct_link(current_content)
+        current_number, current_link = get_newest_podcast_number_and_direct_link(current_content)
         print(f"type(current_link) = {type(current_link)}")
         print(f"current_link = {current_link}")
         if not current_link:
@@ -149,8 +154,8 @@ def tweet_new_podcast() -> None:
             continue
         else:
             print(f"{current_date_str()}: Now posting new tweet!")
-            #api_client.create_tweet(text=f"Ein neuer Mord auf Ex-Podcast wurde veröffentlicht: {current_link}")
-            print(f"Ein neuer Mord auf Ex-Podcast wurde veröffentlicht: {current_link}")
+            #api_client.create_tweet(text=f"Mord auf Ex-Podcast Nummer {current_number} wurde veröffentlicht: {current_link}")
+            print(f"Mord auf Ex-Podcast Nummer {current_number} wurde veröffentlicht: {current_link}")
             last_hash = current_hash
             last_link = current_link
             break # For testing purposes - TODO: remove
