@@ -48,7 +48,7 @@ def csrf_token_filter(website_content: bytes) -> str:
     csrf_token_def_prefix = "<meta name=\"csrf-token\" content=\""
     for line in website_content_lines:
         if csrf_token_def_prefix in line:
-            print(line)
+            #print(line)
             website_content_lines.remove(line)
     
     return "\n".join(website_content_lines)
@@ -103,7 +103,7 @@ def get_newest_podcast_number_and_direct_link(site_source: str) -> typing.Tuple[
         number_find_regex: re.Pattern = re.compile(r">#[0-9]{1,3}")
         number_find_match: re.Match = number_find_regex.search(newest_podcast_h1)
         number: str = newest_podcast_h1[number_find_match.start()+2:number_find_match.end()]
-        print(f"number = {number}")
+        #print(f"number = {number}")
         # Extract the direct link to the new podcast:
         direct_link_regex: re.Pattern = re.compile(r"<a href=\"/[0-9]{1,3}-[a-zA-Z0-9äöüÄÖÜß\-]*\">")
         direct_link_match: re.Match = direct_link_regex.search(newest_podcast_h1)
@@ -123,29 +123,23 @@ def tweet_new_podcast() -> None:
     
     last_content, last_hash = get_filtered_website_content_and_hash()
     last_number, last_link = get_newest_podcast_number_and_direct_link(last_content)
-    print(f"type(last_link) = {type(last_link)}")
-    print(f"last_link = {last_link}")
+    #print(f"last_link = {last_link}")
     if not last_link:
         print(error_string)
         return
     while(True):
-        print("Entered loop")
+        #print("Entered loop")
         # TODO: Test with 5 (5 seconds) and comment out the tweet functionality
         # for that:
         time.sleep(5) # Repeat the check every half hour # 1800
         current_content, current_hash = get_filtered_website_content_and_hash()
-        print(f"type(current_hash) = {type(current_hash)}")
-        print(f"current_hash = {current_hash}")
-        print(f"type(last_hash) = {type(last_hash)}")
-        print(f"last_hash = {last_hash}")
-        """
+        #print(f"current_hash = {current_hash}")
+        #print(f"last_hash = {last_hash}")
         if current_hash == last_hash:
-            print(f"{current_date_str()}: No update!")
+            print(f"{current_date_str()}: No update")
             continue
-        """
         current_number, current_link = get_newest_podcast_number_and_direct_link(current_content)
-        print(f"type(current_link) = {type(current_link)}")
-        print(f"current_link = {current_link}")
+        #print(f"current_link = {current_link}")
         if not current_link:
             print(error_string)
             return
@@ -153,15 +147,15 @@ def tweet_new_podcast() -> None:
             print(f"{current_date_str()}: Obviously, something other than a new post was changed on {URL}!")
             continue
         else:
-            print(f"{current_date_str()}: Now posting new tweet!")
-            #api_client.create_tweet(text=f"Mord auf Ex-Podcast Nummer {current_number} wurde veröffentlicht: {current_link}")
-            print(f"Mord auf Ex-Podcast Nummer {current_number} wurde veröffentlicht: {current_link}")
+            print(f"{current_date_str()}: Now posting new tweet.")
+            publish_message = f"Mord auf Ex-Podcast Nummer {current_number} wurde veröffentlicht: {current_link}"
+            #api_client.create_tweet(text=publish_message)
+            print(publish_message)
             last_hash = current_hash
             last_link = current_link
-            break # For testing purposes - TODO: remove
 
 
 if __name__ == "__main__":
-    print("Started the @mordaufex Twitter bot!")
+    print("Started the @mordaufex Twitter bot.")
     api_client = create_api_client_v2()
     tweet_new_podcast()
