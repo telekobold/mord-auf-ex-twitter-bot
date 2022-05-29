@@ -31,23 +31,58 @@ def current_date_str() -> str:
     return datetime.now().strftime("%Y-%m-%d;%H:%M:%S")
 
 
-def website_content_and_hash(url_string: str) -> typing.Tuple[str, str]:
+def csrf_token_filter(website_content: bytes) -> str:
+    """
+    The website `https://mordaufex.podigee.io/` generates a "csrf-token" head 
+    tag whose content is different on each call. Of course, this also leads to
+    that a different hash value is calculated for each website call.
+    
+    This function filters the csrf token tag from the website content.
+    
+    :website_content: the website content (as `bytes` since the urllib function
+                      returns the content in this form).
+    :returns: the filtered website content as utf-8 string.
+    """
+    website_content_str = website_content.decode("utf-8")
+    website_content_lines = website_content_str.split("\n")
+    csrf_token_def_prefix = "<meta name=\"csrf-token\" content=\""
+    for line in website_content_lines:
+        if csrf_token_def_prefix in line:
+            print(line)
+            website_content_lines.remove(line)
+    
+    return "\n".join(website_content_lines)
+
+
+def get_website_content(url_string: str) -> bytes:
     """
     :url_string: A URL to a HTML page (or to a webserver generating such a page).
-    :returns:    A tuple of the page's HTML source and the SHA256 hash of this
-                 HTML source.
-                 The returned hash value is not exactly the hash value of the
-                 returned content since the returned content is a utf-8
-                 encoding of the content form which the hash value was
-                 generated.
+    :returns:    The retrieved HTML content.
     """
     user_agent_string_win10_firefox: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0"
-    request = urlreq.Request(url_string, headers={"User Agent": user_agent_string_win10_firefox})
-    website_content_bytes: bytes = urlreq.urlopen(request).read()
-    website_content: str = website_content_bytes.decode("utf-8")
-    website_content_hash: str = hashlib.sha256(website_content_bytes).hexdigest()
     
-    return website_content, website_content_hash
+    request = urlreq.Request(url_string, headers={"User Agent": user_agent_string_win10_firefox})
+    
+    return urlreq.urlopen(request).read()
+
+
+def get_hash(content: bytes) -> str:
+    """
+    :content: an arbitrary string
+    :returns: the SHA256 hash value to `content`
+    """
+    return hashlib.sha256(content).hexdigest()
+
+
+def get_filtered_website_content_and_hash() -> typing.Tuple[str, str]:
+    """
+    """
+    website_content_bytes: bytes = get_website_content(URL)
+    website_content_str_filtered: str = csrf_token_filter(website_content_bytes)
+    website_content_bytes_filtered: bytes = website_content_str_filtered.encode("utf-8")
+    website_content_hash: str = get_hash(website_content_bytes_filtered)
+    
+    return website_content_str_filtered, website_content_hash
 
 
 def get_newest_podcast_direct_link(site_source: str) -> str:
@@ -78,7 +113,8 @@ def tweet_new_podcast() -> None:
     posts a new tweet.
     """
     error_string: str = f"{current_date_str()}: The schema of {URL} seems to have changed!"
-    last_content, last_hash = website_content_and_hash(URL)
+    
+    last_content, last_hash = get_filtered_website_content_and_hash()
     last_link: str = get_newest_podcast_direct_link(last_content)
     print(f"type(last_link) = {type(last_link)}")
     print(f"last_link = {last_link}")
@@ -90,13 +126,11 @@ def tweet_new_podcast() -> None:
         # TODO: Test with 5 (5 seconds) and comment out the tweet functionality
         # for that:
         time.sleep(5) # Repeat the check every half hour # 1800
-        current_content, current_hash = website_content_and_hash(URL)
+        current_content, current_hash = get_filtered_website_content_and_hash()
         print(f"type(current_hash) = {type(current_hash)}")
         print(f"current_hash = {current_hash}")
         print(f"type(last_hash) = {type(last_hash)}")
         print(f"last_hash = {last_hash}")
-        # BUG: This is False every time the loop enters:
-        # Reason: The hash value is different every time - TODO: fix that
         if current_hash == last_hash:
             print(f"{current_date_str()}: No update!")
             continue
