@@ -1,5 +1,20 @@
 #!/usr/bin/python
 
+"""
+"THE BEER-WARE LICENSE" (Revision 42):
+Michael Merz <www.telekobold.de> wrote this file. As long as you retain this 
+notice you can do whatever you want with this stuff. If we meet some day, and 
+you think this stuff is worth it, you can buy me a beer in return. telekobold.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+SOFTWARE.
+"""
+
 import typing
 import logging
 import enum
@@ -140,7 +155,7 @@ def tweet_new_podcast() -> None:
         #print("Entered loop")
         # TODO: Test with 5 (5 seconds) and comment out the tweet functionality
         # for that:
-        time.sleep(5) # Repeat the check every half hour # 1800
+        time.sleep(1800) # Repeat the check every half hour
         current_content, current_hash = get_filtered_website_content_and_hash()
         #print(f"current_hash = {current_hash}")
         #print(f"last_hash = {last_hash}")
@@ -158,8 +173,8 @@ def tweet_new_podcast() -> None:
         else:
             logging.info(f"{current_date_str(DateType.STRING)}: Now posting a new tweet.")
             publish_message = f"Mord auf Ex-Podcast Nummer {current_number} wurde veröffentlicht: {current_link}"
-            #api_client.create_tweet(text=publish_message)
-            print(publish_message)
+            api_client.create_tweet(text=publish_message)
+            #print(publish_message)
             logging.info(f"{current_date_str(DateType.STRING)}: Posted a new tweet: {publish_message}")
             last_hash = current_hash
             last_link = current_link
